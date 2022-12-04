@@ -1,118 +1,75 @@
 const {
   CustomWizardScene,
   titles,
+  createKeyboard,
   handlers: { FilesHandler },
 } = require("telegraf-steps-engine");
 
 const clientScene = new CustomWizardScene("clientScene").enter(async (ctx) => {
   delete ctx.wizard.state.input;
 
+  ctx.wizard.state.estate_id = parseInt(ctx.startPayload);
+
   ctx.replyWithKeyboard("START_TITLE", "new_appointment_keyboard");
 });
 
 clientScene.action("new_appointment", (ctx) => {
   ctx.answerCbQuery().catch((e) => {});
-  ctx.replyStep(0);
+
+  if (!ctx.wizard.state.estate_id) ctx.replyStep(0);
+  else ctx.replyStep(1);
 });
 
 clientScene
-  .addSelect({
-    variable: "work_type",
-    options: {
-      Расчетка: "Расчетка",
-      "Курсовая работа": "Курсовая работа",
-      "Лабораторная работа": "Лабораторная работа",
-      "Проектная работа": "Проектная работа",
-      "Дипломная работа": "Дипломная работа",
-      "Помощь на экзамене": "Помощь на экзамене",
-      Шпаргалка: "Шпаргалка",
-    },
+  .addStep({
+    variable: "estate_id",
+    //confines: ["number"],
   })
   .addStep({
-    variable: "subject",
-  })
-  .addSelect({
-    variable: "course",
-    options: {
-      "1 курс": "1",
-      "2 курс": "2",
-      "3 курс": "3",
-      "4 курс": "4",
-    },
+    variable: "period",
+    confines: ["number", "less100"],
   })
   .addStep({
-    variable: "description",
+    variable: "date",
+    confines: ["laterNow"],
+  })
+  .addStep({
+    variable: "people_count",
+    confines: ["less100"],
+  })
+  .addStep({
+    variable: "contact_name",
+    confines: ["string45"],
+  })
+  .addStep({
+    variable: "phone",
+    confines: ["phone"],
   })
   .addSelect({
-    variable: "deadline",
+    variable: "comment",
     options: {
-      "1-2 дня": "1-2",
-      "1 неделя": "7",
-    },
-    onInput: (ctx) => {
-      if (
-        parseInt(ctx.message.text) != ctx.message.text ||
-        parseInt(ctx.message.text) > 365
-      )
-        return ctx.replyWithTitle("ENTER_NUMBER_DEADLINE");
-
-      ctx.wizard.state.input.deadline = ctx.message?.text;
-
-      ctx.replyNextStep();
+      Пропустить: "skip",
     },
     cb: async (ctx) => {
       await ctx.answerCbQuery().catch(console.log);
-
-      ctx.wizard.state.input.deadline = ctx.match[0];
-
-      ctx.replyNextStep();
-    },
-  })
-  .addStep({
-    variable: "files",
-    type: "action",
-    skipTo: "promo",
-    handler: new FilesHandler(async (ctx) => {
-      await ctx.answerCbQuery().catch(console.log);
-
-      ctx.wizard.state.enoughMessageSent = false;
-
-      ctx.replyNextStep();
-    }),
-  })
-  .addSelect({
-    variable: "promo",
-    options: {
-      "У меня нет промокода": "no",
+      await sendToAdmin(ctx);
+      ctx.replyWithTitle("APPOINTMENT_SEND_SUCCESS");
     },
     onInput: async (ctx) => {
-      ctx.wizard.state.input.promo = ctx.message.text;
-
+      ctx.wizard.state.input.comment = ctx.message.text;
       await sendToAdmin(ctx);
-
-      ctx.replyNextStep();
-    },
-    cb: async (ctx) => {
-      await ctx.answerCbQuery().catch(console.log);
-
-      await sendToAdmin(ctx);
-
-      ctx.replyNextStep();
+      ctx.replyWithTitle("APPOINTMENT_SEND_SUCCESS");
     },
   })
   .addSelect({
-    variable: "ending",
+    variable: "reenter",
     options: {
-      "Сделать новый заказ": "new",
+      "Новая заявка": "skip",
     },
     cb: async (ctx) => {
       await ctx.answerCbQuery().catch(console.log);
-
-      if (ctx.match[0] === "new") {
-        delete ctx.wizard.state.input;
-        ctx.replyStep(0);
-      }
     },
+    onInput: async (ctx) => {},
   });
 
 async function sendToAdmin(ctx) {
@@ -124,8 +81,13 @@ async function sendToAdmin(ctx) {
 
   let main_message;
 
-  const { work_type, subject, course, description, deadline, promo } =
+  const { phone, period, date, people_count, contact_name, comment } =
     ctx.wizard.state.input;
+
+  const estate_id =
+    ctx.wizard.state.estate_id && ctx.wizard.state.estate_id != NaN
+      ? ctx.wizard.state.estate_id
+      : ctx.wizard.state.input.estate_id;
 
   if (!username) {
     const user_message = await ctx.telegram.forwardMessage(
@@ -137,13 +99,14 @@ async function sendToAdmin(ctx) {
     main_message = await ctx.telegram.sendMessage(
       admin_id,
       ctx.getTitle("NEW_APPOINTMENT", [
+        estate_id ?? "Нет",
+        date,
+        period,
+        people_count,
+        contact_name,
         username,
-        work_type,
-        subject,
-        course + " курс",
-        description,
-        deadline.toString() + " дн.",
-        promo ?? "Нет",
+        phone,
+        comment ?? "Нет",
       ]),
       {
         reply_to_message_id: user_message?.message_id,
@@ -155,23 +118,17 @@ async function sendToAdmin(ctx) {
   main_message = await ctx.telegram.sendMessage(
     admin_id,
     ctx.getTitle("NEW_APPOINTMENT", [
+      estate_id ?? "Нет",
+      date,
+      period,
+      people_count,
+      contact_name,
       username,
-      work_type,
-      subject,
-      course + " курс",
-      description,
-      deadline.toString() + " дн.",
-      promo ?? "Нет",
+      phone,
+      comment ?? "Нет",
     ]),
     { parse_mode: "HTML" }
   );
-
-  if (ctx.wizard.state.input?.documents)
-    for (fileId of ctx.wizard.state.input.documents)
-      ctx.telegram.sendDocument(admin_id, fileId, {
-        reply_to_message_id: main_message?.message_id,
-        disable_notification: true,
-      });
 }
 
 module.exports = [clientScene];

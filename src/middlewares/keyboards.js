@@ -21,62 +21,11 @@ exports.custom_bottom_keyboard = (ctx, bNames, columns = 2) => {
   return k;
 };
 
-exports.custom_botkeyboard = (ctx, registered) => {
-  const buttons = [
-    [ctx.getTitle("BUTTON_ORDERS"), ctx.getTitle("BUTTON_CLIENTS")],
-    [ctx.getTitle("BUTTON_AGENT_PROFILE")],
-    [ctx.getTitle("BUTTON_CHOOSE_ROLE")],
-  ];
-
-  return Markup.keyboard(buttons).resize();
-};
-
 exports.main_menu_admin_keyboard = (ctx) => {
   const buttons = [[ctx.getTitle("ADMIN_SCENE_BUTTON")]];
 
   return Markup.keyboard(buttons).resize();
 };
-
-exports.main_keyboard = (ctx, isAdmin) => {
-  const buttons = [
-    [ctx.getTitle("BUTTON_BACK_USER")],
-    [ctx.getTitle("BUTTON_FAQ")],
-    [ctx.getTitle("BUTTON_BUY_NFT")],
-    [ctx.getTitle("BUTTON_ENTER_GROUP")],
-    [ctx.getTitle("BUTTON_CHANGE_ADDRESS")],
-    [ctx.getTitle("HELP_MODE")],
-    [ctx.getTitle("BUTTON_ABOUT")],
-  ];
-
-  if (isAdmin) buttons.push([ctx.getTitle("ADMIN_SCENE_BUTTON")]);
-
-  return Markup.keyboard(buttons).resize();
-};
-
-exports.categories_list_keyboard_bottom = (ctx, data, totalStr) => {
-  const categoryButtons = data?.map((name) => {
-    return [name];
-  });
-
-  categoryButtons?.push([totalStr]);
-
-  return Markup.keyboard(categoryButtons).resize();
-};
-
-/*exports.admin_main_keyboard = (ctx) =>
-  Markup.keyboard([
-    [ctx.getTitle("BUTTON_ADD")],
-    [ctx.getTitle("BUTTON_CAPTCHA")],
-    [ctx.getTitle("BUTTON_CLIENT_MENU")],
-  ]).resize();
-
-exports.admin_main_keyboard_owner = (ctx) =>
-  Markup.keyboard([
-    [ctx.getTitle("BUTTON_ADD")],
-    [ctx.getTitle("BUTTON_CAPTCHA")],
-    [ctx.getTitle("BUTTON_ADMINS")],
-    [ctx.getTitle("BUTTON_CLIENT_MENU")],
-  ]).resize();*/
 
 exports.main_menu_goback_keyboard = (ctx) =>
   Markup.keyboard(
