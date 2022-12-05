@@ -8,15 +8,15 @@ const {
 const clientScene = new CustomWizardScene("clientScene").enter(async (ctx) => {
   delete ctx.wizard.state.input;
 
-  if (ctx.startPayload === "selection") {
+  ctx.wizard.state.estate_id = parseInt(ctx.startPayload);
+
+  if (!ctx.startPayload) {
     await ctx.replyWithPhoto(ctx.getTitle("PREVIEW_ID")).catch(console.log);
 
     await ctx.replyWithTitle("START_SELECTION_TITLE");
 
     return ctx.scene.enter("selectionScene");
   }
-
-  ctx.wizard.state.estate_id = parseInt(ctx.startPayload);
 
   await ctx.replyWithPhoto(ctx.getTitle("PREVIEW_ID")).catch(console.log);
   ctx.replyWithKeyboard("START_TITLE", "new_appointment_keyboard");
