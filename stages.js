@@ -5,9 +5,12 @@ const {
 } = require("telegraf");
 const { titles } = require("telegraf-steps-engine");
 
-const mainStage = new Stage([...require("./scenes/mainScene")], {
-  default: "clientScene",
-});
+const mainStage = new Stage(
+  [...require("./scenes/mainScene"), ...require("./scenes/selectionScene")],
+  {
+    default: "clientScene",
+  }
+);
 
 /*mainStage.on("photo", (ctx) => {
   console.log(ctx.message.photo);
@@ -18,6 +21,6 @@ mainStage.start(async (ctx) => {
 });
 
 const stages = new Composer();
-stages.use(mainStage.middleware());
+stages.use(Telegraf.chatType("private", mainStage.middleware()));
 
 module.exports = stages;

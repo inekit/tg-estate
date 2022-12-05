@@ -9,9 +9,69 @@ exports.confirm_keyboard = (ctx) =>
 
 exports.new_appointment_keyboard = (ctx) => {
   const keyboard = inlineKeyboard(
-    [callbackButton(ctx.getTitle("MAKE_ORDER_BUTTON"), "new_appointment")],
+    [
+      callbackButton(ctx.getTitle("MAKE_ORDER_BUTTON"), "new_appointment"),
+      callbackButton(ctx.getTitle("SELECTION_BUTTON"), "selection"),
+    ],
     { columns: 1 }
   );
+  return keyboard;
+};
+
+exports.infrastructure_keyboard = (
+  ctx,
+  selected = {
+    рестораны: false,
+    бары: false,
+    супермаркеты: false,
+    школы: false,
+    "детские сады": false,
+  }
+) => {
+  const keyboard = inlineKeyboard(
+    Object.entries(selected).map(([name, selected]) =>
+      callbackButton(
+        `${selected ? "✅" : ""} ${
+          name.length < 25 ? name : name.substr(0, 25) + ".."
+        }`,
+        "toogle_" + name
+      )
+    ),
+    { columns: 1 }
+  );
+
+  keyboard.reply_markup.inline_keyboard.push([
+    callbackButton(ctx.getTitle("CONFIRM"), "confirm"),
+  ]);
+
+  return keyboard;
+};
+
+exports.udobstva_keyboard = (
+  ctx,
+  selected = {
+    балкон: false,
+    парковка: false,
+    бассейн: false,
+    интернет: true,
+  }
+) => {
+  const keyboard = inlineKeyboard(
+    Object.entries(selected).map(([name, selected]) =>
+      callbackButton(
+        `${selected ? "✅" : ""} ${
+          name.length < 25 ? name : name.substr(0, 25) + ".."
+        }`,
+        "toogle_" + name
+      )
+    ),
+    { columns: 1 }
+  );
+
+  keyboard.reply_markup.inline_keyboard.push([
+    callbackButton(ctx.getTitle("CONFIRM"), "confirm"),
+  ]);
+
   return keyboard;
 };
 

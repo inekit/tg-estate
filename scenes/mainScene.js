@@ -8,8 +8,17 @@ const {
 const clientScene = new CustomWizardScene("clientScene").enter(async (ctx) => {
   delete ctx.wizard.state.input;
 
+  if (ctx.startPayload === "selection") {
+    await ctx.replyWithPhoto(ctx.getTitle("PREVIEW_ID")).catch(console.log);
+
+    await ctx.replyWithTitle("START_SELECTION_TITLE");
+
+    return ctx.scene.enter("selectionScene");
+  }
+
   ctx.wizard.state.estate_id = parseInt(ctx.startPayload);
 
+  await ctx.replyWithPhoto(ctx.getTitle("PREVIEW_ID")).catch(console.log);
   ctx.replyWithKeyboard("START_TITLE", "new_appointment_keyboard");
 });
 
@@ -18,6 +27,12 @@ clientScene.action("new_appointment", (ctx) => {
 
   if (!ctx.wizard.state.estate_id) ctx.replyStep(0);
   else ctx.replyStep(1);
+});
+
+clientScene.action("selection", (ctx) => {
+  ctx.answerCbQuery().catch((e) => {});
+
+  ctx.scene.enter("selectionScene");
 });
 
 clientScene
@@ -53,23 +68,27 @@ clientScene
     cb: async (ctx) => {
       await ctx.answerCbQuery().catch(console.log);
       await sendToAdmin(ctx);
-      ctx.replyWithTitle("APPOINTMENT_SEND_SUCCESS");
+      ctx.replyNextStep();
+
+      //ctx.replyWithTitle("APPOINTMENT_SEND_SUCCESS");
     },
     onInput: async (ctx) => {
       ctx.wizard.state.input.comment = ctx.message.text;
       await sendToAdmin(ctx);
-      ctx.replyWithTitle("APPOINTMENT_SEND_SUCCESS");
+      //ctx.replyWithTitle("APPOINTMENT_SEND_SUCCESS");
+      ctx.replyNextStep();
     },
   })
   .addSelect({
     variable: "reenter",
+    title: "APPOINTMENT_SEND_SUCCESS",
     options: {
       "Новая заявка": "skip",
     },
     cb: async (ctx) => {
       await ctx.answerCbQuery().catch(console.log);
+      ctx.scene.enter("clientScene");
     },
-    onInput: async (ctx) => {},
   });
 
 async function sendToAdmin(ctx) {
