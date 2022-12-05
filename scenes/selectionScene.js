@@ -202,6 +202,10 @@ async function sendToAdmin(ctx) {
 
   const username = ctx.from.username ? "@" + ctx.from.username : null;
 
+  const appointment_id = parseInt(ctx.getTitle("LAST_APPOINTMENT_ID")) + 1;
+
+  ctx.setTitle("LAST_APPOINTMENT_ID", appointment_id.toString());
+
   let main_message;
 
   const {
@@ -228,6 +232,7 @@ async function sendToAdmin(ctx) {
     main_message = await ctx.telegram.sendMessage(
       admin_id,
       ctx.getTitle("NEW_APPOINTMENT_SELECTION", [
+        appointment_id,
         type,
         people_count,
         rooms_count,
@@ -251,6 +256,7 @@ async function sendToAdmin(ctx) {
   main_message = await ctx.telegram.sendMessage(
     admin_id,
     ctx.getTitle("NEW_APPOINTMENT_SELECTION", [
+      appointment_id,
       type,
       people_count,
       rooms_count,
