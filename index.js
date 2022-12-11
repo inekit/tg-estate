@@ -55,7 +55,7 @@ console.log("started");
       });
 
     //    console.log(await ctx.telegram.getWebhookInfo());
-    await bot.startWebhook(secretPath, tlsOptions, 443);
+    await bot.startWebhook(secretPath, null, 3001);
 
     console.log(await ctx.telegram.getWebhookInfo());
   } else {
